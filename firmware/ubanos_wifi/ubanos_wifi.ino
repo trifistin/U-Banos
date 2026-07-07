@@ -12,9 +12,9 @@
 #include <HTTPClient.h>
 
 // ---------------- CONFIGURAR AQUÍ ----------------
-const char* WIFI_SSID = "NOMBRE_DE_TU_RED";
-const char* WIFI_PASS = "CLAVE_DE_TU_RED";
-const char* API_URL   = "https://TU_USUARIO.pythonanywhere.com/api/lecturas";
+const char* WIFI_SSID = "S24";
+const char* WIFI_PASS = "123456789";
+const char* API_URL   = "https://trifistin.pythonanywhere.com/api/lecturas";
 const char* DISPOSITIVO = "esp32-01";
 
 // ---------------- Pines ----------------
