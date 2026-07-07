@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U-Baños — Estado en vivo</title>
+<style>
+  :root { font-family: system-ui, sans-serif; }
+  body { background:#f4f6f8; margin:0; padding:24px; }
+  h1 { margin:0 0 4px; }
+  .sub { color:#666; margin:0 0 24px; }
+  .tarjetas { display:flex; gap:16px; flex-wrap:wrap; }
+  .tarjeta { background:#fff; border-radius:16px; padding:20px 24px;
+             min-width:240px; box-shadow:0 2px 8px rgba(0,0,0,.08);
+             border-top:6px solid #999; }
+  .tarjeta h2 { margin:0 0 8px; font-size:1.1em; color:#444; }
+  .estado { font-size:1.8em; font-weight:700; margin:4px 0; }
+  .detalle { color:#555; margin:4px 0; }
+  .ts { color:#999; font-size:.8em; }
+  .DISPONIBLE { border-color:#2e7d32; } .DISPONIBLE .estado { color:#2e7d32; }
+  .BAJO       { border-color:#f9a825; } .BAJO .estado       { color:#f9a825; }
+  .CRITICO    { border-color:#c62828; } .CRITICO .estado    { color:#c62828; }
+  .error { color:#c62828; }
+</style>
+</head>
+<body>
+  <h1>🚻 U-Baños</h1>
+  <p class="sub">Monitoreo de insumos en tiempo real — FCFM · Grupo 1</p>
+  <div class="tarjetas" id="tarjetas"><p>Cargando…</p></div>
+
+<script>
+// URL de la API en PythonAnywhere (cambiar TU_USUARIO)
+const API = "https://TU_USUARIO.pythonanywhere.com";
+
+const NOMBRES  = { jabon: "Jabón", confort: "Confort" };
+const UNIDADES = { jabon: "ml", confort: "cm de radio" };
+
+async function actualizar() {
+  const cont = document.getElementById("tarjetas");
+  try {
+    const r = await fetch(API + "/api/estado");
+    const data = await r.json();
+    const sensores = Object.keys(data);
+    if (sensores.length === 0) {
+      cont.innerHTML = "<p>Aún no llegan lecturas del ESP32.</p>";
+      return;
+    }
+    cont.innerHTML = sensores.map(s => {
+      const d = data[s];
+      return `<div class="tarjeta ${d.estado}">
+        <h2>${NOMBRES[s] ?? s}</h2>
+        <div class="estado">${d.estado}</div>
+        <p class="detalle">${d.cantidad} ${UNIDADES[s] ?? ""} (${d.porcentaje}%)</p>
+        <p class="ts">Última lectura: ${d.ts.replace("T", " ")}</p>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    cont.innerHTML = `<p class="error">No se pudo conectar a la API (${API}).<br>
+      Verifica que el backend esté activo en PythonAnywhere.</p>`;
+  }
+}
+
+actualizar();
+setInterval(actualizar, 5000); // refresca cada 5 s
+</script>
+</body>
+</html>
