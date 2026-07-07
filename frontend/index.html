@@ -1,67 +1,801 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>U-Baños — Estado en vivo</title>
-<style>
-  :root { font-family: system-ui, sans-serif; }
-  body { background:#f4f6f8; margin:0; padding:24px; }
-  h1 { margin:0 0 4px; }
-  .sub { color:#666; margin:0 0 24px; }
-  .tarjetas { display:flex; gap:16px; flex-wrap:wrap; }
-  .tarjeta { background:#fff; border-radius:16px; padding:20px 24px;
-             min-width:240px; box-shadow:0 2px 8px rgba(0,0,0,.08);
-             border-top:6px solid #999; }
-  .tarjeta h2 { margin:0 0 8px; font-size:1.1em; color:#444; }
-  .estado { font-size:1.8em; font-weight:700; margin:4px 0; }
-  .detalle { color:#555; margin:4px 0; }
-  .ts { color:#999; font-size:.8em; }
-  .DISPONIBLE { border-color:#2e7d32; } .DISPONIBLE .estado { color:#2e7d32; }
-  .BAJO       { border-color:#f9a825; } .BAJO .estado       { color:#f9a825; }
-  .CRITICO    { border-color:#c62828; } .CRITICO .estado    { color:#c62828; }
-  .error { color:#c62828; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Monitoreo Inteligente - Baños</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            padding: 50px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 30px;
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 2.8em;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .config-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            border: 2px solid #cbd5e1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .config-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .config-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-input label {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .config-input input {
+            padding: 12px 14px;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            background: white;
+            color: #0f172a;
+        }
+
+        .config-input input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 35px;
+            margin-bottom: 50px;
+        }
+
+        .sensor-card {
+            border-radius: 18px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sensor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .sensor-card.confort {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+        }
+
+        .sensor-card.jabon {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .sensor-card.alert {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: white;
+        }
+
+        .sensor-card.error {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+        }
+
+        .sensor-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .sensor-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .sensor-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .sensor-description {
+            font-size: 0.9em;
+            opacity: 0.85;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .sensor-value {
+            font-size: 4em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .sensor-unit {
+            font-size: 0.35em;
+            opacity: 0.8;
+            font-weight: 600;
+        }
+
+        .sensor-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .sensor-bar-fill {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            transition: width 0.5s ease-out;
+        }
+
+        .sensor-status {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-top: 15px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2.5s ease-in-out infinite;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .status-indicator.ok {
+            background: #10b981;
+        }
+
+        .status-indicator.alert {
+            background: #ff6b6b;
+        }
+
+        .status-indicator.error {
+            background: #fbbf24;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.6;
+                transform: scale(1.15);
+            }
+        }
+
+        .timestamp {
+            font-size: 0.85em;
+            opacity: 0.75;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .sensor-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            opacity: 0.8;
+            font-weight: 500;
+            font-size: 0.85em;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.2em;
+            margin-top: 4px;
+        }
+
+        .chart-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 35px;
+            border-radius: 18px;
+            margin-bottom: 35px;
+            border: 2px solid #cbd5e1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-section h2 {
+            color: #0f172a;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-bar {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #0c4a6e;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .banos-container {
+            margin-bottom: 50px;
+        }
+
+        .categoria-titulo {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        .banos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .bano-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 3px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .bano-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-color: #3b82f6;
+        }
+
+        .bano-card.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            border-color: #1e40af;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .bano-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .bano-status {
+            font-size: 0.85em;
+            opacity: 0.75;
+        }
+
+        .content-area {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content-area.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .sensors-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .config-row {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .sensor-value {
+                font-size: 3em;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>🚻 U-Baños</h1>
-  <p class="sub">Monitoreo de insumos en tiempo real — FCFM · Grupo 1</p>
-  <div class="tarjetas" id="tarjetas"><p>Cargando…</p></div>
+    <div class="container">
+        <header>
+            <h1>SISTEMA DE MONITOREO INTELIGENTE</h1>
+            <p class="subtitle">Supervisión en tiempo real de baños por departamento</p>
+        </header>
 
-<script>
-// URL de la API en PythonAnywhere (cambiar TU_USUARIO)
-const API = "https://TU_USUARIO.pythonanywhere.com";
+        <div class="config-section">
+            <div class="config-row">
+                <div class="config-input">
+                    <label>API U-Baños:</label>
+                    <input type="text" id="apiUrl" value="https://trifistin.pythonanywhere.com" readonly>
+                </div>
+                <button onclick="loadAllData()">ACTUALIZAR DATOS</button>
+            </div>
+            <div class="info-bar">
+                [INFO] Cada baño corresponde a un dispositivo ESP32. Piloto actual: esp32-01 = Electrica 01. Auto-refresco cada 30 s.
+            </div>
+        </div>
 
-const NOMBRES  = { jabon: "Jabón", confort: "Confort" };
-const UNIDADES = { jabon: "ml", confort: "cm de radio" };
+        <!-- BAÑOS QUIMICA -->
+        <div class="banos-container">
+            <h2 class="categoria-titulo">LABORATORIO QUIMICA</h2>
+            <div class="banos-grid">
+                <div class="bano-card" onclick="selectBano(event, 'qui1')">
+                    <div class="bano-name">Quimica 01</div>
+                    <div class="bano-status" id="status-qui1">[Estado: --]</div>
+                </div>
+                <div class="bano-card" onclick="selectBano(event, 'qui2')">
+                    <div class="bano-name">Quimica 02</div>
+                    <div class="bano-status" id="status-qui2">[Estado: --]</div>
+                </div>
+                <div class="bano-card" onclick="selectBano(event, 'qui3')">
+                    <div class="bano-name">Quimica 03</div>
+                    <div class="bano-status" id="status-qui3">[Estado: --]</div>
+                </div>
+            </div>
+        </div>
 
-async function actualizar() {
-  const cont = document.getElementById("tarjetas");
-  try {
-    const r = await fetch(API + "/api/estado");
-    const data = await r.json();
-    const sensores = Object.keys(data);
-    if (sensores.length === 0) {
-      cont.innerHTML = "<p>Aún no llegan lecturas del ESP32.</p>";
-      return;
-    }
-    cont.innerHTML = sensores.map(s => {
-      const d = data[s];
-      return `<div class="tarjeta ${d.estado}">
-        <h2>${NOMBRES[s] ?? s}</h2>
-        <div class="estado">${d.estado}</div>
-        <p class="detalle">${d.cantidad} ${UNIDADES[s] ?? ""} (${d.porcentaje}%)</p>
-        <p class="ts">Última lectura: ${d.ts.replace("T", " ")}</p>
-      </div>`;
-    }).join("");
-  } catch (e) {
-    cont.innerHTML = `<p class="error">No se pudo conectar a la API (${API}).<br>
-      Verifica que el backend esté activo en PythonAnywhere.</p>`;
-  }
-}
+        <!-- BAÑOS FISICA -->
+        <div class="banos-container">
+            <h2 class="categoria-titulo">LABORATORIO FISICA</h2>
+            <div class="banos-grid">
+                <div class="bano-card" onclick="selectBano(event, 'fis1')">
+                    <div class="bano-name">Fisica 01</div>
+                    <div class="bano-status" id="status-fis1">[Estado: --]</div>
+                </div>
+                <div class="bano-card" onclick="selectBano(event, 'fis2')">
+                    <div class="bano-name">Fisica 02</div>
+                    <div class="bano-status" id="status-fis2">[Estado: --]</div>
+                </div>
+                <div class="bano-card" onclick="selectBano(event, 'fis3')">
+                    <div class="bano-name">Fisica 03</div>
+                    <div class="bano-status" id="status-fis3">[Estado: --]</div>
+                </div>
+            </div>
+        </div>
 
-actualizar();
-setInterval(actualizar, 5000); // refresca cada 5 s
-</script>
+        <!-- BAÑOS ELECTRICA -->
+        <div class="banos-container">
+            <h2 class="categoria-titulo">LABORATORIO ELECTRICA</h2>
+            <div class="banos-grid">
+                <div class="bano-card" onclick="selectBano(event, 'ele1')">
+                    <div class="bano-name">Electrica 01</div>
+                    <div class="bano-status" id="status-ele1">[Estado: --]</div>
+                </div>
+                <div class="bano-card" onclick="selectBano(event, 'ele2')">
+                    <div class="bano-name">Electrica 02</div>
+                    <div class="bano-status" id="status-ele2">[Estado: --]</div>
+                </div>
+                <div class="bano-card" onclick="selectBano(event, 'ele3')">
+                    <div class="bano-name">Electrica 03</div>
+                    <div class="bano-status" id="status-ele3">[Estado: --]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENIDO DINAMICO -->
+        <div id="content-qui1" class="content-area"></div>
+        <div id="content-qui2" class="content-area"></div>
+        <div id="content-qui3" class="content-area"></div>
+        <div id="content-fis1" class="content-area"></div>
+        <div id="content-fis2" class="content-area"></div>
+        <div id="content-fis3" class="content-area"></div>
+        <div id="content-ele1" class="content-area"></div>
+        <div id="content-ele2" class="content-area"></div>
+        <div id="content-ele3" class="content-area"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://trifistin.pythonanywhere.com';
+
+        const BANOS = {
+            'qui1': { nombre: 'Quimica 01',   dispositivo: 'esp32-qui1' },
+            'qui2': { nombre: 'Quimica 02',   dispositivo: 'esp32-qui2' },
+            'qui3': { nombre: 'Quimica 03',   dispositivo: 'esp32-qui3' },
+            'fis1': { nombre: 'Fisica 01',    dispositivo: 'esp32-fis1' },
+            'fis2': { nombre: 'Fisica 02',    dispositivo: 'esp32-fis2' },
+            'fis3': { nombre: 'Fisica 03',    dispositivo: 'esp32-fis3' },
+            'ele1': { nombre: 'Electrica 01', dispositivo: 'esp32-01' },   // PILOTO
+            'ele2': { nombre: 'Electrica 02', dispositivo: 'esp32-ele2' },
+            'ele3': { nombre: 'Electrica 03', dispositivo: 'esp32-ele3' }
+        };
+
+        let currentBano = 'qui1';
+        let allData = {};
+        let charts = {};
+        let autoRefreshInterval;
+
+        function selectBano(event, banoId) {
+            event.preventDefault();
+            currentBano = banoId;
+
+            document.querySelectorAll('.bano-card').forEach(function(card) { card.classList.remove('active'); });
+            event.target.closest('.bano-card').classList.add('active');
+
+            document.querySelectorAll('.content-area').forEach(function(area) { area.classList.remove('active'); });
+            document.getElementById('content-' + banoId).classList.add('active');
+
+            if (allData[banoId]) {
+                displayBanoData(banoId);
+            }
+        }
+
+        function createBanoContent(banoId) {
+            const bano = BANOS[banoId];
+            const contentDiv = document.getElementById('content-' + banoId);
+
+            if (contentDiv.innerHTML === '') {
+                const html = '<h2 style="font-size: 2em; color: #0f172a; margin-bottom: 30px; border-bottom: 2px solid #3b82f6; padding-bottom: 15px;">BANO: ' + bano.nombre.toUpperCase() + '</h2>' +
+                    '<div class="sensors-grid">' +
+                    '<div class="sensor-card confort" id="sensor-' + banoId + '-confort">' +
+                    '<div class="sensor-content">' +
+                    '<div class="sensor-icon">[CONFORT]</div>' +
+                    '<div class="sensor-title">Sensor Confort</div>' +
+                    '<div class="sensor-description">Infrarrojo Sharp</div>' +
+                    '<div class="sensor-value"><span id="value-' + banoId + '-confort">--</span><span class="sensor-unit">%</span></div>' +
+                    '<div class="sensor-bar"><div class="sensor-bar-fill" id="bar-' + banoId + '-confort" style="width: 0%"></div></div>' +
+                    '<div class="sensor-status"><span class="status-indicator ok" id="indicator-' + banoId + '-confort"></span><span id="status-' + banoId + '-confort">Cargando...</span></div>' +
+                    '<div class="sensor-stats">' +
+                    '<div class="stat-item"><div class="stat-label">Minimo</div><div class="stat-value" id="min-' + banoId + '-confort">-</div></div>' +
+                    '<div class="stat-item"><div class="stat-label">Maximo</div><div class="stat-value" id="max-' + banoId + '-confort">-</div></div>' +
+                    '</div><div class="timestamp" id="timestamp-' + banoId + '-confort"></div>' +
+                    '</div></div>' +
+                    '<div class="sensor-card jabon" id="sensor-' + banoId + '-jabon">' +
+                    '<div class="sensor-content">' +
+                    '<div class="sensor-icon">[JABON]</div>' +
+                    '<div class="sensor-title">Sensor Jabon</div>' +
+                    '<div class="sensor-description">Infrarrojo Sharp</div>' +
+                    '<div class="sensor-value"><span id="value-' + banoId + '-jabon">--</span><span class="sensor-unit">%</span></div>' +
+                    '<div class="sensor-bar"><div class="sensor-bar-fill" id="bar-' + banoId + '-jabon" style="width: 0%"></div></div>' +
+                    '<div class="sensor-status"><span class="status-indicator ok" id="indicator-' + banoId + '-jabon"></span><span id="status-' + banoId + '-jabon">Cargando...</span></div>' +
+                    '<div class="sensor-stats">' +
+                    '<div class="stat-item"><div class="stat-label">Minimo</div><div class="stat-value" id="min-' + banoId + '-jabon">-</div></div>' +
+                    '<div class="stat-item"><div class="stat-label">Maximo</div><div class="stat-value" id="max-' + banoId + '-jabon">-</div></div>' +
+                    '</div><div class="timestamp" id="timestamp-' + banoId + '-jabon"></div>' +
+                    '</div></div></div>' +
+                    '<div class="chart-section"><h2>>>> COMPARATIVA CONFORT vs JABON <<<</h2>' +
+                    '<div class="chart-container"><canvas id="chart-' + banoId + '"></canvas></div></div>';
+                contentDiv.innerHTML = html;
+            }
+        }
+
+        function initChart(banoId) {
+            const chartCanvas = document.getElementById('chart-' + banoId);
+            if (!chartCanvas) return;
+
+            if (charts[banoId]) {
+                charts[banoId].destroy();
+            }
+
+            const ctx = chartCanvas.getContext('2d');
+            charts[banoId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Confort (%)',
+                            data: [],
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#06b6d4',
+                            pointHoverRadius: 7,
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Jabon (%)',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#f59e0b',
+                            pointHoverRadius: 7,
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: { size: 12, weight: 600 },
+                                color: '#475569',
+                                padding: 15
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#64748b' },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#64748b' },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSensorDisplay(banoId, sensorType, value, minVal, maxVal, timestamp) {
+            const valueEl = document.getElementById('value-' + banoId + '-' + sensorType);
+            if (!valueEl) return;
+
+            const barEl = document.getElementById('bar-' + banoId + '-' + sensorType);
+            const statusEl = document.getElementById('status-' + banoId + '-' + sensorType);
+            const indicatorEl = document.getElementById('indicator-' + banoId + '-' + sensorType);
+            const minEl = document.getElementById('min-' + banoId + '-' + sensorType);
+            const maxEl = document.getElementById('max-' + banoId + '-' + sensorType);
+            const timestampEl = document.getElementById('timestamp-' + banoId + '-' + sensorType);
+
+            valueEl.textContent = value >= 0 ? value.toFixed(1) : '--';
+            barEl.style.width = (value >= 0 ? value : 0) + '%';
+            minEl.textContent = minVal >= 0 ? minVal.toFixed(1) : '-';
+            maxEl.textContent = maxVal >= 0 ? maxVal.toFixed(1) : '-';
+            timestampEl.textContent = '[Lectura: ' + timestamp + ']';
+
+            let statusText, indicatorClass;
+            if (value < 0) {
+                statusText = '[SIN SEÑAL]';
+                indicatorClass = 'error';
+            } else if (value < 20) {
+                statusText = '[CRITICO]';
+                indicatorClass = 'alert';
+            } else if (value < 50) {
+                statusText = '[BAJO]';
+                indicatorClass = 'alert';
+            } else {
+                statusText = '[DISPONIBLE]';
+                indicatorClass = 'ok';
+            }
+
+            statusEl.textContent = statusText;
+            indicatorEl.className = 'status-indicator ' + indicatorClass;
+        }
+
+        function displayBanoData(banoId) {
+            const series = allData[banoId];
+            if (!series || (series.confort.length === 0 && series.jabon.length === 0)) return;
+
+            const lc = series.confort.length ? series.confort[series.confort.length - 1] : null;
+            const lj = series.jabon.length ? series.jabon[series.jabon.length - 1] : null;
+
+            const cVals = series.confort.map(function(p) { return p.pct; });
+            const jVals = series.jabon.map(function(p) { return p.pct; });
+            const cMin = cVals.length ? Math.min.apply(null, cVals) : -1;
+            const cMax = cVals.length ? Math.max.apply(null, cVals) : -1;
+            const jMin = jVals.length ? Math.min.apply(null, jVals) : -1;
+            const jMax = jVals.length ? Math.max.apply(null, jVals) : -1;
+
+            function fmt(ts) {
+                return new Date(ts).toLocaleString('es-ES', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            }
+
+            updateSensorDisplay(banoId, 'confort', lc ? lc.pct : -1, cMin, cMax, lc ? fmt(lc.ts) : '--');
+            updateSensorDisplay(banoId, 'jabon',   lj ? lj.pct : -1, jMin, jMax, lj ? fmt(lj.ts) : '--');
+
+            // Actualizar grafico (eje X: hora de cada lectura)
+            const base = series.confort.length >= series.jabon.length ? series.confort : series.jabon;
+            const labels = base.map(function(p) {
+                return new Date(p.ts).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+            });
+
+            if (charts[banoId]) {
+                charts[banoId].data.labels = labels;
+                charts[banoId].data.datasets[0].data = cVals;
+                charts[banoId].data.datasets[1].data = jVals;
+                charts[banoId].update();
+            }
+
+            // Estado del bano en la grilla: el peor de los dos insumos
+            const peor = Math.min(lc ? lc.pct : 100, lj ? lj.pct : 100);
+            const statusText = peor < 20 ? '[REPONER]' : (peor < 50 ? '[BAJO]' : '[OK]');
+            document.getElementById('status-' + banoId).textContent = statusText;
+        }
+
+        async function loadAllData() {
+            try {
+                const response = await fetch(API_URL + '/api/historial?n=300');
+                if (!response.ok) throw new Error('Error al conectar con la API U-Banos');
+
+                const filas = await response.json();
+
+                // Agrupar por dispositivo y sensor, en orden cronologico (la API responde DESC)
+                const porDispositivo = {};
+                for (let i = filas.length - 1; i >= 0; i--) {
+                    const f = filas[i];
+                    if (!porDispositivo[f.dispositivo]) {
+                        porDispositivo[f.dispositivo] = { confort: [], jabon: [] };
+                    }
+                    if (f.sensor === 'confort' || f.sensor === 'jabon') {
+                        porDispositivo[f.dispositivo][f.sensor].push({ ts: f.ts, pct: f.porcentaje });
+                    }
+                }
+
+                for (let banoId in BANOS) {
+                    allData[banoId] = porDispositivo[BANOS[banoId].dispositivo] || { confort: [], jabon: [] };
+                    createBanoContent(banoId);
+                    initChart(banoId);
+                    displayBanoData(banoId);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Inicializacion
+        document.addEventListener('DOMContentLoaded', function() {
+            createBanoContent('qui1');
+            initChart('qui1');
+            document.querySelector('.bano-card').classList.add('active');
+            document.getElementById('content-qui1').classList.add('active');
+
+            loadAllData();
+            autoRefreshInterval = setInterval(loadAllData, 30000);
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+    </script>
 </body>
 </html>
