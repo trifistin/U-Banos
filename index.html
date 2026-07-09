@@ -7,17 +7,51 @@
     <script async src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         :root {
-            --fcfm-red: #c8102e;
-            --fcfm-red-dark: #8f0c20;
-            --fcfm-red-light: #fdecee;
-            --fcfm-gray-900: #262627;
-            --fcfm-gray-700: #58595b;
-            --fcfm-gray-500: #8a8b8d;
-            --fcfm-gray-300: #d1d3d4;
-            --fcfm-gray-100: #f2f2f3;
+            --fcfm-red: #0b5cad;
+            --fcfm-red-dark: #063b74;
+            --fcfm-red-light: #e7f1ff;
+            --fcfm-gray-900: #14213d;
+            --fcfm-gray-700: #41516c;
+            --fcfm-gray-500: #7f8ca3;
+            --fcfm-gray-300: #d7e0ee;
+            --fcfm-gray-100: #f4f7fb;
             --white: #ffffff;
             --ok-green: #0f9d58;
-            --crit-red: #c8102e;
+            --crit-red: #d64545;
+            --ucursos-blue: #0b5cad;
+            --ucampus-cyan: #00a6d6;
+            --app-bg: linear-gradient(135deg, #eaf3ff 0%, #f8fbff 48%, #e9f9ff 100%);
+            --app-surface: rgba(255, 255, 255, 0.98);
+            --app-surface-soft: #f4f7fb;
+            --app-line: #d7e0ee;
+        }
+
+        body[data-theme="dark"] {
+            --fcfm-red: #5db7ff;
+            --fcfm-red-dark: #9ed8ff;
+            --fcfm-red-light: rgba(93, 183, 255, 0.14);
+            --fcfm-gray-900: #f4f7fb;
+            --fcfm-gray-700: #c9d4e6;
+            --fcfm-gray-500: #96a8c2;
+            --fcfm-gray-300: #2a3952;
+            --fcfm-gray-100: #172235;
+            --white: #101827;
+            --ok-green: #58d68d;
+            --crit-red: #ff6b6b;
+            --app-bg: linear-gradient(135deg, #07101f 0%, #0f1b2d 52%, #12395c 100%);
+            --app-surface: rgba(13, 22, 36, 0.98);
+            --app-surface-soft: #121d30;
+            --app-line: #2a3952;
+        }
+
+        body[data-theme="dark"] .building-card,
+        body[data-theme="dark"] .bano-card,
+        body[data-theme="dark"] .floor-tab,
+        body[data-theme="dark"] .mascot-card,
+        body[data-theme="dark"] .hero-pill,
+        body[data-theme="dark"] .chart-container,
+        body[data-theme="dark"] .extra-stat {
+            background: linear-gradient(135deg, var(--app-surface) 0%, var(--app-surface-soft) 100%);
         }
 
         * {
@@ -28,7 +62,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1c1c1e 0%, var(--fcfm-gray-700) 55%, var(--fcfm-red-dark) 100%);
+            background: var(--app-bg);
+            color: var(--fcfm-gray-900);
             min-height: 100vh;
             padding: 20px;
             display: flex;
@@ -40,9 +75,10 @@
             max-width: 1600px;
             width: 100%;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            background: var(--app-surface);
+            border: 1px solid var(--app-line);
+            border-radius: 18px;
+            box-shadow: 0 25px 50px rgba(17, 35, 62, 0.18);
             padding: 50px;
             display: flex;
             flex-direction: column;
@@ -69,11 +105,11 @@
         header {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             gap: 28px;
             text-align: left;
             margin-bottom: 30px;
-            border-bottom: 4px solid var(--fcfm-red);
+            border-bottom: 1px solid var(--app-line);
             padding-bottom: 25px;
             flex-wrap: wrap;
         }
@@ -108,6 +144,123 @@
             padding: 3px 10px;
             border-radius: 20px;
             letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--app-surface-soft);
+            color: var(--fcfm-gray-900);
+            border: 2px solid var(--app-line);
+            box-shadow: none;
+        }
+
+        .theme-toggle:hover {
+            color: var(--fcfm-red-dark);
+            border-color: var(--fcfm-red);
+        }
+
+        .ucursos-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+            gap: 24px;
+            align-items: stretch;
+            margin-bottom: 28px;
+            padding: 28px;
+            border: 1px solid var(--app-line);
+            border-radius: 16px;
+            background:
+                linear-gradient(135deg, rgba(11, 92, 173, 0.08), rgba(0, 166, 214, 0.08)),
+                var(--app-surface-soft);
+        }
+
+        .hero-eyebrow {
+            color: var(--fcfm-red-dark);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.78em;
+            margin-bottom: 8px;
+        }
+
+        .hero-title {
+            color: var(--fcfm-gray-900);
+            font-size: 2.1em;
+            line-height: 1.08;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .hero-copy {
+            color: var(--fcfm-gray-700);
+            font-size: 1.02em;
+            font-weight: 600;
+            max-width: 760px;
+        }
+
+        .hero-pills {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .hero-pill {
+            background: var(--app-surface);
+            color: var(--fcfm-gray-700);
+            border: 1px solid var(--app-line);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-weight: 800;
+            font-size: 0.86em;
+        }
+
+        .mascot-card {
+            min-height: 210px;
+            border-radius: 14px;
+            border: 1px solid var(--app-line);
+            background: var(--app-surface);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mascot-photo {
+            width: 100%;
+            max-height: 260px;
+            border-radius: 12px;
+            display: block;
+            object-fit: contain;
+            background:
+                radial-gradient(circle at 30% 20%, rgba(0, 166, 214, 0.24), transparent 34%),
+                radial-gradient(circle at 75% 30%, rgba(11, 92, 173, 0.20), transparent 32%),
+                var(--fcfm-red-light);
+        }
+
+        .mascot-card strong {
+            color: var(--fcfm-gray-900);
+            margin-top: 12px;
+            display: block;
+        }
+
+        .mascot-card span {
+            color: var(--fcfm-gray-700);
+            font-size: 0.9em;
+            font-weight: 600;
+            line-height: 1.35;
+            display: block;
+            margin-top: 4px;
         }
 
         .section-title {
@@ -673,8 +826,50 @@
         .building-card.active .building-meta,
         .building-card.active .building-status,
         .bano-card.active .bano-status,
-        .bano-card.active .bano-meta {
+        .bano-card.active .bano-meta,
+        .bano-card.active .count-line,
+        .bano-card.active .type-note,
+        .building-card.active .count-line {
             color: rgba(255, 255, 255, 0.82);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .card-icon,
+        .type-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            background: var(--fcfm-red-light);
+            color: var(--fcfm-red-dark);
+            font-size: 1.7em;
+            font-weight: 900;
+        }
+
+        .bano-card.disabled {
+            cursor: not-allowed;
+            opacity: 0.58;
+            filter: grayscale(0.9);
+        }
+
+        .bano-card.disabled::after {
+            display: none;
+        }
+
+        .bano-card.disabled:hover {
+            transform: none;
+            border-color: var(--fcfm-gray-300);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         .building-name,
@@ -690,6 +885,20 @@
             font-size: 0.9em;
             font-weight: 600;
             line-height: 1.4;
+        }
+
+        .count-line {
+            color: var(--fcfm-gray-700);
+            font-size: 0.86em;
+            font-weight: 800;
+            margin-top: 12px;
+        }
+
+        .type-note {
+            color: var(--fcfm-gray-700);
+            font-size: 0.82em;
+            font-weight: 700;
+            margin-top: 8px;
         }
 
         .building-status,
@@ -742,6 +951,14 @@
             border-color: var(--fcfm-red);
             color: white;
             box-shadow: 0 8px 18px rgba(200, 16, 46, 0.22);
+        }
+
+        .floor-tab small {
+            display: block;
+            font-size: 0.72em;
+            font-weight: 700;
+            margin-top: 3px;
+            opacity: 0.78;
         }
 
         .empty-state {
@@ -808,6 +1025,10 @@
         }
 
         @media (max-width: 1024px) {
+            .ucursos-hero {
+                grid-template-columns: 1fr;
+            }
+
             .sensors-grid {
                 grid-template-columns: 1fr;
                 gap: 25px;
@@ -892,13 +1113,37 @@
                 <p class="subtitle">Supervisión en tiempo real de baños por departamento</p>
                 <span class="facultad-tag">FACULTAD DE CIENCIAS FÍSICAS Y MATEMÁTICAS — U. DE CHILE</span>
             </div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()">Modo oscuro</button>
+            </div>
         </header>
+
+        <section class="ucursos-hero">
+            <div>
+                <div class="hero-eyebrow">U-Cursos + U-Campus + U-Baños</div>
+                <h2 class="hero-title">Encuentra un baño disponible sin darte vueltas</h2>
+                <p class="hero-copy">Elige edificio, piso o sector, y tipo de baño. Dejamos los datos preparados para cambiar disponibilidad y cantidades mañana sin tocar el diseño completo.</p>
+                <div class="hero-pills">
+                    <span class="hero-pill">Edificios FCFM</span>
+                    <span class="hero-pill">Baños comunes</span>
+                    <span class="hero-pill">Baños accesibles</span>
+                    <span class="hero-pill">Modo claro/oscuro</span>
+                </div>
+            </div>
+            <div class="mascot-card">
+                <img class="mascot-photo" src="assets/ubanitos.png" alt="Ubañitos">
+                <div>
+                    <strong>Ubañitos</strong>
+                    <span>El hermano azul que acompaña el estado de baños disponibles en la facultad.</span>
+                </div>
+            </div>
+        </section>
 
         <h2 class="section-title">Resumen General</h2>
         <div class="summary-bar" id="summaryBar">
             <div class="summary-item">
                 <div class="num" id="sumTotal">9</div>
-                <div class="lbl">Baños monitoreados</div>
+                <div class="lbl">Baños registrados</div>
             </div>
             <div class="summary-item ok">
                 <div class="num" id="sumOk">--</div>
@@ -943,8 +1188,8 @@
             <div class="flow-header">
                 <div>
                     <div class="flow-kicker">Paso 1</div>
-                    <h2 class="flow-title">¿Dónde quieres visualizar el estado de los baños?</h2>
-                    <p class="flow-subtitle">Selecciona un edificio. Luego elige el piso y el baño específico que quieres revisar.</p>
+                    <h2 class="flow-title">¿Dónde quieres buscar un baño?</h2>
+                    <p class="flow-subtitle">Primero selecciona el edificio, luego el piso o sector, y finalmente el tipo de baño.</p>
                 </div>
                 <div class="flow-breadcrumb" id="flowBreadcrumb">Sin selección</div>
             </div>
@@ -955,8 +1200,8 @@
                 <div class="flow-header">
                     <div>
                         <div class="flow-kicker">Paso 2</div>
-                        <h2 class="flow-title" id="floorTitle">Elige el piso</h2>
-                        <p class="flow-subtitle" id="floorSubtitle">Los baños se muestran agrupados por nivel del edificio.</p>
+                        <h2 class="flow-title" id="floorTitle">Elige el piso o sector</h2>
+                        <p class="flow-subtitle" id="floorSubtitle">Después podrás elegir baño de hombres, mujeres o sin género.</p>
                     </div>
                 </div>
                 <div class="floor-tabs" id="floorTabs"></div>
@@ -978,42 +1223,127 @@
     <script>
         const API_URL = 'https://trifistin.pythonanywhere.com';
 
+        const TIPOS_BANO = {
+            hombre: { nombre: 'Hombres', icono: '🚹', descripcion: 'Baño para hombres' },
+            mujer: { nombre: 'Mujeres', icono: '🚺', descripcion: 'Baño para mujeres' },
+            sin_genero: { nombre: 'Sin género', icono: '⚧', descripcion: 'Baño sin género' }
+        };
+
         const EDIFICIOS = {
-            quimica: {
-                nombre: 'Edificio Química',
-                area: 'Laboratorio Química',
-                descripcion: 'Baños monitoreados por piso en el sector de Química.',
-                banos: ['qui1', 'qui2', 'qui3']
+            electrica: {
+                nombre: 'Eléctrica',
+                area: 'Departamento de Ingeniería Eléctrica',
+                icono: '⚡',
+                descripcion: 'Tiene 4 pisos más el nivel -1.',
+                pisos: [
+                    { id: '-1', label: 'Piso -1' },
+                    { id: '1', label: 'Primer piso' },
+                    { id: '2', label: 'Segundo piso' },
+                    { id: '3', label: 'Tercer piso' },
+                    { id: '4', label: 'Cuarto piso' }
+                ]
             },
             fisica: {
-                nombre: 'Edificio Física',
-                area: 'Laboratorio Física',
-                descripcion: 'Baños monitoreados por piso en el sector de Física.',
-                banos: ['fis1', 'fis2', 'fis3']
+                nombre: 'Física',
+                area: 'Departamento de Física',
+                icono: '🧲',
+                descripcion: 'Tiene 2 pisos disponibles por ahora.',
+                pisos: [
+                    { id: '1', label: 'Primer piso' },
+                    { id: '2', label: 'Segundo piso' }
+                ]
             },
-            electrica: {
-                nombre: 'Edificio Eléctrica',
-                area: 'Laboratorio Eléctrica',
-                descripcion: 'Baños monitoreados por piso en el sector de Eléctrica.',
-                banos: ['ele1', 'ele2', 'ele3']
+            geologia: {
+                nombre: 'Geología',
+                area: 'Departamento de Geología',
+                icono: '⛰️',
+                descripcion: 'Tiene 3 pisos disponibles por ahora.',
+                pisos: [
+                    { id: '1', label: 'Primer piso' },
+                    { id: '2', label: 'Segundo piso' },
+                    { id: '3', label: 'Tercer piso' }
+                ]
+            },
+            quimica: {
+                nombre: 'Química',
+                area: 'Departamento de Química',
+                icono: '⚗️',
+                descripcion: 'Tiene 2 pisos disponibles por ahora.',
+                pisos: [
+                    { id: '1', label: 'Primer piso' },
+                    { id: '2', label: 'Segundo piso' }
+                ]
+            },
+            cafeta: {
+                nombre: 'Cafeta',
+                area: 'Sector de cafetería',
+                icono: '☕',
+                descripcion: 'Tiene un solo sector de baños.',
+                pisos: [
+                    { id: 'cafeta', label: 'Sector Cafeta' }
+                ]
+            },
+            justicia: {
+                nombre: 'Justicia Espada',
+                area: 'Sector Justicia Espada',
+                icono: '🗡️',
+                descripcion: 'Tiene un solo sector de baños.',
+                pisos: [
+                    { id: 'justicia', label: 'Sector único' }
+                ]
             }
         };
 
+        // EDITAR MAÑANA AQUÍ:
+        // - Cambia comunes/accesibles cuando tengan el conteo real.
+        // - Si un tipo no existe en un piso, borra esa entrada y se verá gris.
+        // - Solo el piloto usa datos reales por ahora: esp32-01.
         const BANOS = {
-            qui1: { nombre: 'Baño primer piso', edificio: 'quimica', piso: 1, dispositivo: 'esp32-qui1' },
-            qui2: { nombre: 'Baño segundo piso', edificio: 'quimica', piso: 2, dispositivo: 'esp32-qui2' },
-            qui3: { nombre: 'Baño tercer piso', edificio: 'quimica', piso: 3, dispositivo: 'esp32-qui3' },
-            fis1: { nombre: 'Baño primer piso', edificio: 'fisica', piso: 1, dispositivo: 'esp32-fis1' },
-            fis2: { nombre: 'Baño segundo piso', edificio: 'fisica', piso: 2, dispositivo: 'esp32-fis2' },
-            fis3: { nombre: 'Baño tercer piso', edificio: 'fisica', piso: 3, dispositivo: 'esp32-fis3' },
-            ele1: { nombre: 'Baño primer piso', edificio: 'electrica', piso: 1, dispositivo: 'esp32-01', piloto: true },
-            ele2: { nombre: 'Baño segundo piso', edificio: 'electrica', piso: 2, dispositivo: 'esp32-ele2' },
-            ele3: { nombre: 'Baño tercer piso', edificio: 'electrica', piso: 3, dispositivo: 'esp32-ele3' }
+            ele_m1_h: { nombre: 'Baño hombres', edificio: 'electrica', piso: '-1', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-ele-m1-h' },
+            ele_m1_m: { nombre: 'Baño mujeres', edificio: 'electrica', piso: '-1', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-ele-m1-m' },
+            ele_m1_s: { nombre: 'Baño sin género', edificio: 'electrica', piso: '-1', tipo: 'sin_genero', comunes: 1, accesibles: 1, dispositivo: 'esp32-ele-m1-s' },
+            ele_1_h: { nombre: 'Baño hombres', edificio: 'electrica', piso: '1', tipo: 'hombre', comunes: 2, accesibles: 1, dispositivo: 'esp32-01', piloto: true },
+            ele_1_m: { nombre: 'Baño mujeres', edificio: 'electrica', piso: '1', tipo: 'mujer', comunes: 2, accesibles: 1, dispositivo: 'esp32-ele-1-m' },
+            ele_2_h: { nombre: 'Baño hombres', edificio: 'electrica', piso: '2', tipo: 'hombre', comunes: 2, accesibles: 0, dispositivo: 'esp32-ele-2-h' },
+            ele_2_m: { nombre: 'Baño mujeres', edificio: 'electrica', piso: '2', tipo: 'mujer', comunes: 2, accesibles: 0, dispositivo: 'esp32-ele-2-m' },
+            ele_2_s: { nombre: 'Baño sin género', edificio: 'electrica', piso: '2', tipo: 'sin_genero', comunes: 1, accesibles: 1, dispositivo: 'esp32-ele-2-s' },
+            ele_3_h: { nombre: 'Baño hombres', edificio: 'electrica', piso: '3', tipo: 'hombre', comunes: 2, accesibles: 0, dispositivo: 'esp32-ele-3-h' },
+            ele_3_m: { nombre: 'Baño mujeres', edificio: 'electrica', piso: '3', tipo: 'mujer', comunes: 2, accesibles: 0, dispositivo: 'esp32-ele-3-m' },
+            ele_4_h: { nombre: 'Baño hombres', edificio: 'electrica', piso: '4', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-ele-4-h' },
+            ele_4_m: { nombre: 'Baño mujeres', edificio: 'electrica', piso: '4', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-ele-4-m' },
+
+            fis_1_h: { nombre: 'Baño hombres', edificio: 'fisica', piso: '1', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-fis-1-h' },
+            fis_1_m: { nombre: 'Baño mujeres', edificio: 'fisica', piso: '1', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-fis-1-m' },
+            fis_2_h: { nombre: 'Baño hombres', edificio: 'fisica', piso: '2', tipo: 'hombre', comunes: 1, accesibles: 1, dispositivo: 'esp32-fis-2-h' },
+            fis_2_m: { nombre: 'Baño mujeres', edificio: 'fisica', piso: '2', tipo: 'mujer', comunes: 1, accesibles: 1, dispositivo: 'esp32-fis-2-m' },
+            fis_2_s: { nombre: 'Baño sin género', edificio: 'fisica', piso: '2', tipo: 'sin_genero', comunes: 1, accesibles: 0, dispositivo: 'esp32-fis-2-s' },
+
+            geo_1_h: { nombre: 'Baño hombres', edificio: 'geologia', piso: '1', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-geo-1-h' },
+            geo_1_m: { nombre: 'Baño mujeres', edificio: 'geologia', piso: '1', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-geo-1-m' },
+            geo_1_s: { nombre: 'Baño sin género', edificio: 'geologia', piso: '1', tipo: 'sin_genero', comunes: 1, accesibles: 1, dispositivo: 'esp32-geo-1-s' },
+            geo_2_h: { nombre: 'Baño hombres', edificio: 'geologia', piso: '2', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-geo-2-h' },
+            geo_2_m: { nombre: 'Baño mujeres', edificio: 'geologia', piso: '2', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-geo-2-m' },
+            geo_3_h: { nombre: 'Baño hombres', edificio: 'geologia', piso: '3', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-geo-3-h' },
+            geo_3_m: { nombre: 'Baño mujeres', edificio: 'geologia', piso: '3', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-geo-3-m' },
+
+            qui_1_h: { nombre: 'Baño hombres', edificio: 'quimica', piso: '1', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-qui-1-h' },
+            qui_1_m: { nombre: 'Baño mujeres', edificio: 'quimica', piso: '1', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-qui-1-m' },
+            qui_1_s: { nombre: 'Baño sin género', edificio: 'quimica', piso: '1', tipo: 'sin_genero', comunes: 1, accesibles: 1, dispositivo: 'esp32-qui-1-s' },
+            qui_2_h: { nombre: 'Baño hombres', edificio: 'quimica', piso: '2', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-qui-2-h' },
+            qui_2_m: { nombre: 'Baño mujeres', edificio: 'quimica', piso: '2', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-qui-2-m' },
+
+            caf_h: { nombre: 'Baño hombres', edificio: 'cafeta', piso: 'cafeta', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-caf-h' },
+            caf_m: { nombre: 'Baño mujeres', edificio: 'cafeta', piso: 'cafeta', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-caf-m' },
+            caf_s: { nombre: 'Baño sin género', edificio: 'cafeta', piso: 'cafeta', tipo: 'sin_genero', comunes: 1, accesibles: 1, dispositivo: 'esp32-caf-s' },
+
+            jus_h: { nombre: 'Baño hombres', edificio: 'justicia', piso: 'justicia', tipo: 'hombre', comunes: 1, accesibles: 0, dispositivo: 'esp32-jus-h' },
+            jus_m: { nombre: 'Baño mujeres', edificio: 'justicia', piso: 'justicia', tipo: 'mujer', comunes: 1, accesibles: 0, dispositivo: 'esp32-jus-m' }
         };
 
         let currentBuilding = null;
         let currentFloor = null;
         let currentBano = null;
+        let currentBathroomType = null;
         let allData = {};
         let charts = {};
         let autoRefreshInterval;
@@ -1028,6 +1358,34 @@
             }
         });
 
+        function applyTheme(theme) {
+            document.body.dataset.theme = theme;
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+            }
+            try {
+                localStorage.setItem('ubanos-theme', theme);
+            } catch (error) {
+                console.warn('No se pudo guardar el tema:', error);
+            }
+        }
+
+        function toggleTheme() {
+            const nextTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        }
+
+        function loadSavedTheme() {
+            let saved = 'light';
+            try {
+                saved = localStorage.getItem('ubanos-theme') || 'light';
+            } catch (error) {
+                saved = 'light';
+            }
+            applyTheme(saved === 'dark' ? 'dark' : 'light');
+        }
+
         function toggleApiPanel() {
             const panel = document.getElementById('api-panel');
             const btn = document.getElementById('api-toggle-btn');
@@ -1035,11 +1393,66 @@
             btn.textContent = isOpen ? 'OCULTAR API U-BAÑOS ▲' : 'VER API U-BAÑOS ▼';
         }
 
-        function pisoLabel(piso) {
-            if (piso === 1) return 'Primer piso';
-            if (piso === 2) return 'Segundo piso';
-            if (piso === 3) return 'Tercer piso';
-            return 'Piso ' + piso;
+        function pisoKey(piso) {
+            return String(piso);
+        }
+
+        function pisoLabel(piso, edificioId) {
+            const key = pisoKey(piso);
+            const edificio = EDIFICIOS[edificioId || currentBuilding];
+            if (edificio && edificio.pisos) {
+                const item = edificio.pisos.find(function(p) { return p.id === key; });
+                if (item) return item.label;
+            }
+            if (key === '-1') return 'Piso -1';
+            if (key === '1') return 'Primer piso';
+            if (key === '2') return 'Segundo piso';
+            if (key === '3') return 'Tercer piso';
+            if (key === '4') return 'Cuarto piso';
+            return 'Sector ' + key;
+        }
+
+        function getBanosForBuilding(buildingId) {
+            return Object.keys(BANOS).filter(function(id) {
+                return BANOS[id].edificio === buildingId;
+            });
+        }
+
+        function getBanosForFloor(buildingId, piso) {
+            const key = pisoKey(piso);
+            return Object.keys(BANOS).filter(function(id) {
+                const bano = BANOS[id];
+                return bano.edificio === buildingId && pisoKey(bano.piso) === key;
+            });
+        }
+
+        function countBathrooms(ids) {
+            return ids.reduce(function(acc, id) {
+                const bano = BANOS[id];
+                acc.comunes += bano.comunes || 0;
+                acc.accesibles += bano.accesibles || 0;
+                return acc;
+            }, { comunes: 0, accesibles: 0 });
+        }
+
+        function formatBathroomCounts(ids) {
+            const counts = countBathrooms(ids);
+            return counts.comunes + ' comunes · ' + counts.accesibles + ' accesibles';
+        }
+
+        function findBanoByType(buildingId, piso, tipoId) {
+            const key = pisoKey(piso);
+            return Object.keys(BANOS).find(function(id) {
+                const bano = BANOS[id];
+                return bano.edificio === buildingId && pisoKey(bano.piso) === key && bano.tipo === tipoId;
+            }) || null;
+        }
+
+        function totalRegisteredBathrooms() {
+            return Object.keys(BANOS).reduce(function(total, id) {
+                const bano = BANOS[id];
+                return total + (bano.comunes || 0) + (bano.accesibles || 0);
+            }, 0);
         }
 
         function getBanoWorst(banoId) {
@@ -1063,8 +1476,8 @@
 
             const parts = [];
             if (currentBuilding) parts.push(EDIFICIOS[currentBuilding].nombre);
-            if (currentFloor) parts.push(pisoLabel(currentFloor));
-            if (currentBano) parts.push(BANOS[currentBano].nombre);
+            if (currentFloor) parts.push(pisoLabel(currentFloor, currentBuilding));
+            if (currentBathroomType) parts.push(TIPOS_BANO[currentBathroomType].nombre);
             breadcrumb.textContent = parts.length ? parts.join(' / ') : 'Sin selección';
         }
 
@@ -1074,15 +1487,18 @@
 
             grid.innerHTML = Object.keys(EDIFICIOS).map(function(id) {
                 const edificio = EDIFICIOS[id];
-                const estados = edificio.banos.map(getBanoWorst);
+                const ids = getBanosForBuilding(id);
+                const estados = ids.map(getBanoWorst);
                 const activos = estados.filter(function(v) { return v !== null && v !== undefined; });
                 const peor = activos.length ? Math.min.apply(null, activos) : null;
                 const status = statusTextFromWorst(peor);
                 const activeClass = currentBuilding === id ? ' active' : '';
 
                 return '<button class="building-card' + activeClass + '" type="button" data-building="' + id + '" aria-pressed="' + (currentBuilding === id ? 'true' : 'false') + '" onclick="selectBuilding(\'' + id + '\')">' +
-                    '<div class="building-name">' + edificio.nombre + '</div>' +
-                    '<div class="building-meta">' + edificio.area + '<br>' + edificio.banos.length + ' baños monitoreados</div>' +
+                    '<div class="card-top"><div><div class="building-name">' + edificio.nombre + '</div>' +
+                    '<div class="building-meta">' + edificio.area + '<br>' + edificio.descripcion + '</div></div>' +
+                    '<div class="card-icon" aria-hidden="true">' + edificio.icono + '</div></div>' +
+                    '<div class="count-line">🚻 ' + formatBathroomCounts(ids) + '</div>' +
                     '<div class="building-status" id="status-building-' + id + '">' + status + '</div>' +
                     '</button>';
             }).join('');
@@ -1091,12 +1507,10 @@
         function selectBuilding(buildingId) {
             currentBuilding = buildingId;
             currentBano = null;
+            currentBathroomType = null;
 
-            const pisos = EDIFICIOS[buildingId].banos
-                .map(function(id) { return BANOS[id].piso; })
-                .filter(function(piso, index, arr) { return arr.indexOf(piso) === index; })
-                .sort(function(a, b) { return a - b; });
-            currentFloor = pisos[0] || null;
+            const pisos = EDIFICIOS[buildingId].pisos || [];
+            currentFloor = pisos.length ? pisos[0].id : null;
 
             document.getElementById('floorPanel').classList.add('active');
             document.getElementById('detailShell').classList.remove('active');
@@ -1114,23 +1528,25 @@
             if (!currentBuilding) return;
 
             const edificio = EDIFICIOS[currentBuilding];
-            document.getElementById('floorTitle').textContent = '¿Qué baño quieres revisar en ' + edificio.nombre + '?';
-            document.getElementById('floorSubtitle').textContent = edificio.descripcion;
+            document.getElementById('floorTitle').textContent = 'Elige piso o sector en ' + edificio.nombre;
+            document.getElementById('floorSubtitle').textContent = 'Después elige hombres, mujeres o sin género. Las opciones no disponibles aparecen en gris.';
 
-            const pisos = edificio.banos
-                .map(function(id) { return BANOS[id].piso; })
-                .filter(function(piso, index, arr) { return arr.indexOf(piso) === index; })
-                .sort(function(a, b) { return a - b; });
+            const pisos = edificio.pisos || [];
 
             document.getElementById('floorTabs').innerHTML = pisos.map(function(piso) {
-                const activeClass = piso === currentFloor ? ' active' : '';
-                return '<button class="floor-tab' + activeClass + '" type="button" data-floor="' + piso + '" aria-pressed="' + (piso === currentFloor ? 'true' : 'false') + '" onclick="selectFloor(' + piso + ')">' + pisoLabel(piso) + '</button>';
+                const activeClass = piso.id === currentFloor ? ' active' : '';
+                const ids = getBanosForFloor(currentBuilding, piso.id);
+                return '<button class="floor-tab' + activeClass + '" type="button" data-floor="' + piso.id + '" aria-pressed="' + (piso.id === currentFloor ? 'true' : 'false') + '" onclick="selectFloor(\'' + piso.id + '\')">' +
+                    piso.label +
+                    '<small>' + formatBathroomCounts(ids) + '</small>' +
+                    '</button>';
             }).join('');
         }
 
         function selectFloor(piso) {
-            currentFloor = piso;
+            currentFloor = pisoKey(piso);
             currentBano = null;
+            currentBathroomType = null;
             document.getElementById('detailShell').classList.remove('active');
             document.getElementById('dynamicContent').innerHTML = '';
 
@@ -1142,17 +1558,21 @@
         function renderBathrooms() {
             if (!currentBuilding || !currentFloor) return;
 
-            const ids = EDIFICIOS[currentBuilding].banos.filter(function(id) {
-                return BANOS[id].piso === currentFloor;
-            });
-
             const grid = document.getElementById('bathroomGrid');
-            if (ids.length === 0) {
-                grid.innerHTML = '<div class="empty-state">No hay baños registrados para este piso.</div>';
-                return;
-            }
 
-            grid.innerHTML = ids.map(function(id) {
+            grid.innerHTML = Object.keys(TIPOS_BANO).map(function(tipoId) {
+                const tipo = TIPOS_BANO[tipoId];
+                const id = findBanoByType(currentBuilding, currentFloor, tipoId);
+
+                if (!id) {
+                    return '<button class="bano-card disabled" type="button" disabled aria-disabled="true">' +
+                        '<div class="card-top"><div><div class="bano-name">' + tipo.nombre + '</div>' +
+                        '<div class="bano-meta">' + tipo.descripcion + '<br>' + pisoLabel(currentFloor, currentBuilding) + '</div></div>' +
+                        '<div class="type-icon" aria-hidden="true">' + tipo.icono + '</div></div>' +
+                        '<div class="type-note">No disponible en este piso o sector</div>' +
+                        '</button>';
+                }
+
                 const bano = BANOS[id];
                 const worst = getBanoWorst(id);
                 const status = statusTextFromWorst(worst);
@@ -1160,8 +1580,10 @@
                 const piloto = bano.piloto ? '<br>Piloto con datos reales' : '';
 
                 return '<button class="bano-card' + activeClass + '" id="card-' + id + '" type="button" data-bano="' + id + '" aria-pressed="' + (currentBano === id ? 'true' : 'false') + '" onclick="selectBano(\'' + id + '\')">' +
-                    '<div class="bano-name">' + bano.nombre + '</div>' +
-                    '<div class="bano-meta">' + EDIFICIOS[bano.edificio].area + '<br>' + pisoLabel(bano.piso) + piloto + '</div>' +
+                    '<div class="card-top"><div><div class="bano-name">' + tipo.nombre + '</div>' +
+                    '<div class="bano-meta">' + tipo.descripcion + '<br>' + pisoLabel(bano.piso, bano.edificio) + piloto + '</div></div>' +
+                    '<div class="type-icon" aria-hidden="true">' + tipo.icono + '</div></div>' +
+                    '<div class="count-line">🚻 ' + (bano.comunes || 0) + ' comunes · ♿ ' + (bano.accesibles || 0) + ' accesibles</div>' +
                     '<div class="bano-status" id="status-' + id + '">' + status + '</div>' +
                     '</button>';
             }).join('');
@@ -1171,7 +1593,8 @@
             currentBano = banoId;
             const bano = BANOS[banoId];
             currentBuilding = bano.edificio;
-            currentFloor = bano.piso;
+            currentFloor = pisoKey(bano.piso);
+            currentBathroomType = bano.tipo;
 
             document.getElementById('detailShell').classList.add('active');
             renderBuildings();
@@ -1200,6 +1623,7 @@
         function createBanoContent(banoId) {
             const bano = BANOS[banoId];
             const edificio = EDIFICIOS[bano.edificio];
+            const tipo = TIPOS_BANO[bano.tipo];
             const contentDiv = document.getElementById('dynamicContent');
 
             if (contentDiv.dataset.bano !== banoId) {
@@ -1210,8 +1634,9 @@
                     }
                 });
 
-                const html = '<h2 style="font-size: 1.8em; color: var(--fcfm-gray-900); margin-bottom: 8px;">' + bano.nombre + '</h2>' +
-                    '<p style="color: var(--fcfm-gray-700); font-weight: 600; margin-bottom: 28px;">' + edificio.nombre + ' / ' + pisoLabel(bano.piso) + '</p>' +
+                const html = '<h2 style="font-size: 1.8em; color: var(--fcfm-gray-900); margin-bottom: 8px;">' + tipo.icono + ' ' + tipo.nombre + '</h2>' +
+                    '<p style="color: var(--fcfm-gray-700); font-weight: 700; margin-bottom: 8px;">' + edificio.nombre + ' / ' + pisoLabel(bano.piso, bano.edificio) + '</p>' +
+                    '<p style="color: var(--fcfm-gray-700); font-weight: 700; margin-bottom: 28px;">🚻 ' + (bano.comunes || 0) + ' baños comunes · ♿ ' + (bano.accesibles || 0) + ' baños accesibles</p>' +
                     '<div class="sensors-grid">' +
                     '<div class="sensor-card confort" id="sensor-' + banoId + '-confort">' +
                     '<div class="sensor-content">' +
@@ -1507,7 +1932,7 @@
         }
 
         function updateSummaryBar(peores, timestamp) {
-            const total = Object.keys(BANOS).length;
+            const total = totalRegisteredBathrooms();
             let ok = 0, criticos = 0;
             peores.forEach(function(p) {
                 if (p === null || p === undefined) return;
@@ -1562,6 +1987,7 @@
 
         // Inicializacion
         document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
             renderBuildings();
             updateBreadcrumb();
             loadAllData();
