@@ -197,5 +197,34 @@ def index():
         <body style="background:#fafafa"><h1 style="font-family:sans-serif">U-Baños — Estado en vivo</h1>
         {tarjetas}</body></html>"""
 
+@app.route("/api/debug-telegram")
+def debug_telegram():
+    tiene_token = bool(TELEGRAM_TOKEN)
+    tiene_chat = bool(TELEGRAM_CHAT_ID)
+    if not (tiene_token and tiene_chat):
+        return jsonify({
+            "token_presente": tiene_token,
+            "chat_presente": tiene_chat,
+            "error": "variables de entorno no cargadas",
+        })
+    try:
+        r = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+            json={"chat_id": TELEGRAM_CHAT_ID, "text": "Prueba de diagnostico"},
+            timeout=10,
+        )
+        return jsonify({
+            "token_presente": True,
+            "chat_presente": True,
+            "status_telegram": r.status_code,
+            "respuesta_telegram": r.json(),
+        })
+    except Exception as e:
+        return jsonify({
+            "token_presente": True,
+            "chat_presente": True,
+            "excepcion": str(e),
+        })
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
