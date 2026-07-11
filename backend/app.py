@@ -45,22 +45,35 @@ def estado_anterior(db, dispositivo, sensor):
     ).fetchone()
     return fila["estado"] if fila else None
 
+UBICACION_DISPOSITIVO = {
+    "esp32-01":       "Electrica, Piso 1 (piloto)",
+    "esp32-ele-1-h":  "Electrica, Piso 1, Bano hombres",
+    "esp32-ele-1-m":  "Electrica, Piso 1, Bano mujeres",
+    "esp32-ele-1-u":  "Electrica, Piso 1, Bano universal",
+    # ... agregas el resto segun tus dispositivos reales
+}
+
 def revisar_alerta(db, dispositivo, sensor, estado_nuevo, porcentaje, cantidad, ts):
     anterior = estado_anterior(db, dispositivo, sensor)
     if estado_nuevo != "CRITICO" or anterior == "CRITICO":
         return
+    ubicacion = UBICACION_DISPOSITIVO.get(dispositivo, dispositivo)
     nombre = NOMBRE_SENSOR.get(sensor, sensor)
     unidad = UNIDAD_SENSOR.get(sensor, "")
+    try:
+        hora = datetime.fromisoformat(ts).strftime("%d/%m %H:%M")
+    except ValueError:
+        hora = ts
     lineas = [
         "REPONER INSUMO",
-        f"Dispositivo: {dispositivo}",
+        f"Ubicacion: {ubicacion}",
         f"Insumo: {nombre}",
     ]
     if porcentaje is not None:
         lineas.append(f"Nivel: {porcentaje}%")
     if cantidad is not None:
         lineas.append(f"Restante: {cantidad} {unidad}")
-    lineas.append(f"Hora: {ts}")
+    lineas.append(f"Hora: {hora}")
     enviar_telegram("\n".join(lineas))
 
 
