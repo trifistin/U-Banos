@@ -13,6 +13,57 @@
 
 import os
 import sqlite3
+
+import requests
+
+# ---------------- Alertas Telegram ----------------
+
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+
+NOMBRE_SENSOR = {"jabon": "Jabon", "confort": "Papel higienico"}
+UNIDAD_SENSOR = {"jabon": "ml", "confort": "cm de radio"}
+
+def enviar_telegram(texto):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        app.logger.warning("Telegram no configurado; alerta omitida")
+        return
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+            json={"chat_id": TELEGRAM_CHAT_ID, "text": texto},
+            timeout=5,
+        )
+    except Exception as e:
+        app.logger.error(f"Error enviando alerta Telegram: {e}")
+
+def estado_anterior(db, dispositivo, sensor):
+    fila = db.execute(
+        "SELECT estado FROM lecturas WHERE dispositivo = ? AND sensor = ? "
+        "ORDER BY id DESC LIMIT 1",
+        (dispositivo, sensor),
+    ).fetchone()
+    return fila["estado"] if fila else None
+
+def revisar_alerta(db, dispositivo, sensor, estado_nuevo, porcentaje, cantidad, ts):
+    anterior = estado_anterior(db, dispositivo, sensor)
+    if estado_nuevo != "CRITICO" or anterior == "CRITICO":
+        return
+    nombre = NOMBRE_SENSOR.get(sensor, sensor)
+    unidad = UNIDAD_SENSOR.get(sensor, "")
+    lineas = [
+        "REPONER INSUMO",
+        f"Dispositivo: {dispositivo}",
+        f"Insumo: {nombre}",
+    ]
+    if porcentaje is not None:
+        lineas.append(f"Nivel: {porcentaje}%")
+    if cantidad is not None:
+        lineas.append(f"Restante: {cantidad} {unidad}")
+    lineas.append(f"Hora: {ts}")
+    enviar_telegram("\n".join(lineas))
+
+
 from datetime import datetime
 from flask import Flask, request, jsonify, g
 
@@ -76,18 +127,19 @@ def recibir_lectura():
         return jsonify({"ok": False, "error": f"faltan campos {requeridos}"}), 400
 
     db = get_db()
+    ts = datetime.now().isoformat(timespec="seconds")
+    dispositivo = data.get("dispositivo", "esp32-01")
+    sensor = data["sensor"]
+    estado_nuevo = data["estado"]
+    porcentaje = data.get("porcentaje")
+    cantidad = data.get("cantidad")
+
+    revisar_alerta(db, dispositivo, sensor, estado_nuevo, porcentaje, cantidad, ts)
+
     db.execute(
         "INSERT INTO lecturas (ts, dispositivo, sensor, distancia_cm, cantidad, porcentaje, estado) "
         "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (
-            datetime.now().isoformat(timespec="seconds"),
-            data.get("dispositivo", "esp32-01"),
-            data["sensor"],
-            data.get("distancia_cm"),
-            data.get("cantidad"),
-            data.get("porcentaje"),
-            data["estado"],
-        ),
+        (ts, dispositivo, sensor, data.get("distancia_cm"), cantidad, porcentaje, estado_nuevo),
     )
     db.commit()
     return jsonify({"ok": True}), 201
