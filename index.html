@@ -2082,18 +2082,26 @@
             }
         }
 
-        // Inicializacion
+        //Inicialización
+    
         document.addEventListener('DOMContentLoaded', function() {
             loadSavedTheme();
             window.addEventListener('hashchange', applyRoute);
             applyRoute();
             loadAllData();
-            autoRefreshInterval = setInterval(loadAllData, 30000);
+
+            // Modo demo: agregar ?demo a la URL -> refresh cada 2,5 s. Normal: 30 s.
+            const MODO_DEMO = window.location.search.includes('demo') ||
+                      window.location.hash.includes('demo');
+            const INTERVALO_REFRESH = MODO_DEMO ? 2500 : 30000;
+
+            autoRefreshInterval = setInterval(loadAllData, INTERVALO_REFRESH);
         });
 
         window.addEventListener('beforeunload', function() {
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
         });
+
     </script>
 </body>
 </html>
