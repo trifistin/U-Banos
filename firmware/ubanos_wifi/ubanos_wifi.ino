@@ -10,6 +10,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#define MODO_DEMO  // envío cada 2 s. Comentar esta línea = vuelve a 10 s.
 
 // ---------------- CONFIGURAR AQUÍ ----------------
 const char* WIFI_SSID = "S24";
@@ -22,13 +23,41 @@ const int trigPin = 2;
 const int echoPin = 15;
 const int irPin   = 34;
 
-// ---------------- Calibración ----------------
-const float US_OFFSET           = 1.4;  // corrección del ultrasónico (cm)
+// ---------------- Calibración: JABÓN (ultrasónico) ----------------
+const float US_OFFSET           = 1.4;   // corrección del ultrasónico (cm)
 const float ALTURA_SENSOR_FONDO = 20.0;
 const float DIAMETRO_INTERNO    = 10.0;
-const float DIST_SENSOR_EJE     = 20.0;
-const float RADIO_LLENO         = 6.0;
-const float RADIO_TUBO          = 2.2;
+
+// ---------------- Calibración: CONFORT (infrarrojo Sharp) ----------------
+// El GP2Y0A21YK0F solo está especificado para 10–80 cm. Nuestro montaje
+// trabaja a 0,5–7,5 cm, así que la ecuación del datasheet NO aplica.
+// En su lugar: TABLA DE CALIBRACIÓN EMPÍRICA (medida 13-07-2026 con regla
+// y superficie del rollo real). La curva resultó MONÓTONA creciente en
+// todo el rango -> es invertible por interpolación lineal.
+//
+//   DIST_LLENO = 0,5 cm -> rollo nuevo  -> 100 %
+//   DIST_VACIO = 7,5 cm -> cono         ->   0 %
+const float DIST_LLENO = 0.5;
+const float DIST_VACIO = 7.5;
+const float ESPESOR_PAPEL = DIST_VACIO - DIST_LLENO;   // 7.0 cm útiles
+
+// Tabla ADC -> distancia (ambos deben quedar en orden CRECIENTE de ADC).
+const int   N_CAL = 7;
+const float CAL_ADC[N_CAL]  = { 1575, 1840, 1975, 2680, 3298, 3670, 3997 };
+const float CAL_DIST[N_CAL] = {  0.5,  1.5,  2.5,  3.5,  4.5,  5.5,  7.0 };
+
+// Zona corrupta: a 7 cm el ADC ya está en 3997, a solo 98 cuentas del techo
+// (4095). Más allá el sensor satura / la curva se pliega -> dato inválido.
+const float ADC_MAX_VALIDO = 4010.0;   // sobre esto: descartar lectura
+const float ADC_MIN_VALIDO = 1200.0;   // bajo esto: sin objeto / desconectado
+
+// Filtro de coherencia física: el papel solo baja de a poco; el único salto
+// legítimo hacia arriba es una recarga (rollo nuevo -> vuelve a ~100 %).
+// Un salto grande hacia ABAJO en 1 s es físicamente imposible -> se descarta.
+const float SALTO_MAX_PCT     = 25.0;  // caída máx. creíble entre mediciones
+const int   CONFIRMACIONES    = 3;     // lecturas seguidas para aceptar un salto
+
+// ---------------- Umbrales ----------------
 const float UMBRAL_BAJO         = 50.0;
 const float UMBRAL_CRITICO      = 20.0;
 
@@ -49,7 +78,8 @@ float leerUltrasonico() {
   return (duration * 0.0343f) / 2.0f + US_OFFSET;
 }
 
-float leerInfrarrojo() {
+// Devuelve el ADC promediado del IR (o -1 si está fuera de la ventana válida).
+float leerInfrarrojoADC() {
   const int N = 15;
   long suma = 0;
   for (int i = 0; i < N; i++) {
@@ -57,12 +87,21 @@ float leerInfrarrojo() {
     delayMicroseconds(500);
   }
   float adc = suma / (float)N;
-  float volts = adc * (3.3f / 4095.0f);
-  if (volts < 0.35f) return -1.0;
-  float d = 27.728f * powf(volts, -1.2045f);
-  if (d < 10.0f) d = 10.0f;
-  if (d > 80.0f) d = 80.0f;
-  return d;
+  if (adc < ADC_MIN_VALIDO || adc > ADC_MAX_VALIDO) return -1.0;
+  return adc;
+}
+
+// Interpolación lineal ADC -> distancia sobre la tabla de calibración.
+float adcADistancia(float adc) {
+  if (adc <= CAL_ADC[0])         return CAL_DIST[0];          // más lleno que lleno: clamp
+  if (adc >= CAL_ADC[N_CAL - 1]) return CAL_DIST[N_CAL - 1];  // borde de tabla: clamp a 7.0
+  for (int i = 0; i < N_CAL - 1; i++) {
+    if (adc <= CAL_ADC[i + 1]) {
+      float t = (adc - CAL_ADC[i]) / (CAL_ADC[i + 1] - CAL_ADC[i]);
+      return CAL_DIST[i] + t * (CAL_DIST[i + 1] - CAL_DIST[i]);
+    }
+  }
+  return CAL_DIST[N_CAL - 1];
 }
 
 const char* estadoDesde(float pct) {
@@ -187,20 +226,70 @@ void loop() {
     if (tocaEnviar) enviarLectura("jabon", distJabon, ml, pct, est);
   }
 
-  // ---------- CONFORT (infrarrojo) ----------
-  float distConfort = leerInfrarrojo();
-  if (distConfort < 0) {
-    Serial.println("[CONFORT] fuera de rango");
+  // ---------- CONFORT (infrarrojo + tabla + filtro de coherencia) ----------
+  // Estado persistente del filtro:
+  static float pctValida       = -1.0;  // última medición aceptada (-1 = aún ninguna)
+  static float pctCandidata    = -1.0;  // valor "sospechoso" en verificación
+  static int   contConfirma    = 0;     // lecturas seguidas que confirman el salto
+
+  float adcConfort = leerInfrarrojoADC();
+
+  if (adcConfort < 0) {
+    // Zona corrupta (saturación >7 cm) o sensor desconectado.
+    // Nos quedamos con la última medición coherente, como pide el diseño.
+    if (pctValida >= 0) {
+      const char* est = estadoDesde(pctValida);
+      Serial.print("[CONFORT] ADC fuera de ventana -> manteniendo ultima valida: ");
+      Serial.print(pctValida, 0); Serial.print("% | "); Serial.println(est);
+      if (tocaEnviar) enviarLectura("confort", -1.0, 0.0, pctValida, est);
+    } else {
+      Serial.println("[CONFORT] ADC fuera de ventana y sin historial -> sin dato");
+    }
   } else {
-    float radio = limitar(DIST_SENSOR_EJE - distConfort, RADIO_TUBO, RADIO_LLENO);
-    float pct = limitar(100.0f * (radio - RADIO_TUBO) / (RADIO_LLENO - RADIO_TUBO), 0, 100);
-    const char* est = estadoDesde(pct);
+    float distConfort = adcADistancia(adcConfort);
+    float espesor = limitar(DIST_VACIO - distConfort, 0, ESPESOR_PAPEL);
+    float pctNueva = limitar(100.0f * espesor / ESPESOR_PAPEL, 0, 100);
 
-    Serial.print("[CONFORT] dist: "); Serial.print(distConfort, 1);
-    Serial.print(" cm | radio: "); Serial.print(radio, 2); Serial.print(" cm (");
-    Serial.print(pct, 0); Serial.print("%) | "); Serial.println(est);
+    // ---- Filtro de coherencia física ----
+    // El papel no puede caer >SALTO_MAX_PCT en 1 s. Una caída así es un
+    // artefacto (reflejo, mano, borde de saturación). Solo se acepta si se
+    // repite CONFIRMACIONES veces seguidas (entonces es real).
+    // Las subidas se aceptan siempre: recarga de rollo = evento legítimo.
+    bool aceptar = true;
+    if (pctValida >= 0 && (pctValida - pctNueva) > SALTO_MAX_PCT) {
+      if (pctCandidata >= 0 && fabsf(pctNueva - pctCandidata) < 10.0f) {
+        contConfirma++;
+      } else {
+        pctCandidata = pctNueva;
+        contConfirma = 1;
+      }
+      if (contConfirma < CONFIRMACIONES) {
+        aceptar = false;
+        Serial.print("[CONFORT] salto sospechoso (");
+        Serial.print(pctValida, 0); Serial.print("% -> ");
+        Serial.print(pctNueva, 0); Serial.print("%), verificando ");
+        Serial.print(contConfirma); Serial.print("/");
+        Serial.println(CONFIRMACIONES);
+      }
+    }
 
-    if (tocaEnviar) enviarLectura("confort", distConfort, radio, pct, est);
+    if (aceptar) {
+      pctValida    = pctNueva;
+      pctCandidata = -1.0;
+      contConfirma = 0;
+
+      const char* est = estadoDesde(pctValida);
+      Serial.print("[CONFORT] ADC: ");   Serial.print(adcConfort, 0);
+      Serial.print(" | dist: ");         Serial.print(distConfort, 2);
+      Serial.print(" cm | papel: ");     Serial.print(espesor, 2);
+      Serial.print(" cm (");             Serial.print(pctValida, 0);
+      Serial.print("%) | ");             Serial.println(est);
+
+      if (tocaEnviar) enviarLectura("confort", distConfort, espesor, pctValida, est);
+    } else if (tocaEnviar && pctValida >= 0) {
+      // Toca enviar pero la lectura está en verificación: se reporta la válida.
+      enviarLectura("confort", -1.0, 0.0, pctValida, estadoDesde(pctValida));
+    }
   }
 
   if (tocaEnviar) ultimoEnvio = ahora;
