@@ -650,19 +650,6 @@
             box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.25);
         }
 
-        .cubiculo .cub-badge {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            font-size: 0.58em;
-            background: var(--fcfm-red);
-            color: #fff;
-            padding: 2px 7px;
-            border-radius: 8px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
         .cubiculos-hint {
             margin-top: 12px;
             font-size: 0.9em;
@@ -1343,7 +1330,7 @@
                     </div>
                 </div>
                 <div class="info-bar">
-                    [INFO] Cada baño corresponde a un dispositivo ESP32. Piloto actual: esp32-01 = Eléctrica / primer piso. Auto-refresco cada 30 s.
+                    [INFO] Cada baño corresponde a un dispositivo ESP32. Dispositivo activo: esp32-01 = Eléctrica / primer piso / hombres / cubículo 4. Auto-refresco cada 30 s.
                 </div>
             </div>
         </div>
@@ -1530,16 +1517,13 @@
         let charts = {};
         let autoRefreshInterval;
 
-        // Cada baño tiene 4 cubículos. El cubículo piloto (con sensores) se elige
-        // al azar una vez por baño y se mantiene estable durante la sesión.
+        // Cada baño tiene 4 cubículos. El cubículo con sensores es SIEMPRE el N.º 4.
+        // Ahí llegan las lecturas reales de la API (Eléctrica / piso 1 / hombres = esp32-01).
         const CUBICULOS_POR_BANO = 4;
-        const PILOTO_CUBICULO = {};
+        const CUBICULO_CON_SENSOR = CUBICULOS_POR_BANO - 1; // índice 3 = cubículo 4
 
         function getPilotoCubiculo(banoId) {
-            if (PILOTO_CUBICULO[banoId] === undefined) {
-                PILOTO_CUBICULO[banoId] = Math.floor(Math.random() * CUBICULOS_POR_BANO);
-            }
-            return PILOTO_CUBICULO[banoId];
+            return CUBICULO_CON_SENSOR;
         }
 
         // --- Efecto cursor reactivo (spotlight) para botones y tarjetas ---
@@ -1761,7 +1745,7 @@
                 const worst = getBanoWorst(id);
                 const status = statusTextFromWorst(worst);
                 const activeClass = currentBano === id ? ' active' : '';
-                const piloto = bano.piloto ? '<br>Piloto con datos reales' : '';
+                const piloto = bano.piloto ? '<br>Con datos en tiempo real' : '';
 
                 return '<button class="bano-card' + activeClass + '" id="card-' + id + '" type="button" data-bano="' + id + '" aria-pressed="' + (currentBano === id ? 'true' : 'false') + '" onclick="selectBano(\'' + id + '\')">' +
                     '<div class="card-top"><div><div class="bano-name">' + tipo.nombre + '</div>' +
@@ -1886,11 +1870,9 @@
                 const esPiloto = i === pilotoIdx;
                 const selClass = i === currentCubiculo ? ' selected' : '';
                 const pilClass = esPiloto ? ' piloto' : '';
-                const badge = esPiloto ? '<span class="cub-badge">Piloto</span>' : '';
                 const label = esPiloto ? 'Con sensor' : 'Sin sensor';
                 html += '<button type="button" class="cubiculo' + pilClass + selClass + '" ' +
                     'onclick="selectCubiculo(\'' + banoId + '\', ' + i + ')">' +
-                    badge +
                     '<span class="cub-num">' + (i + 1) + '</span>' +
                     '<span class="cub-label">' + label + '</span>' +
                     '</button>';
@@ -1910,15 +1892,15 @@
                 if (datos) datos.style.display = '';
                 if (detalle) detalle.style.display = '';
                 if (nosensor) nosensor.style.display = 'none';
-                if (hint) hint.textContent = 'Cubículo ' + (idx + 1) + ': cubículo piloto con sensores de confort y jabón.';
+                if (hint) hint.textContent = 'Cubículo ' + (idx + 1) + ': cubículo con sensores de confort y jabón.';
             } else {
                 if (datos) datos.style.display = 'none';
                 if (detalle) detalle.style.display = 'none';
                 if (nosensor) {
                     nosensor.style.display = '';
-                    nosensor.textContent = 'El cubículo ' + (idx + 1) + ' aún no tiene sensores instalados. Las mediciones en tiempo real están en el cubículo piloto (N.º ' + (pilotoIdx + 1) + ').';
+                    nosensor.textContent = 'El cubículo ' + (idx + 1) + ' no tiene sensores instalados. Las mediciones en tiempo real están en el cubículo ' + (pilotoIdx + 1) + '.';
                 }
-                if (hint) hint.textContent = 'Selecciona el cubículo piloto (N.º ' + (pilotoIdx + 1) + ') para ver las mediciones.';
+                if (hint) hint.textContent = 'Selecciona el cubículo ' + (pilotoIdx + 1) + ' para ver las mediciones.';
             }
         }
 
