@@ -54,6 +54,22 @@
             background: linear-gradient(135deg, var(--app-surface) 0%, var(--app-surface-soft) 100%);
         }
 
+        /* En modo oscuro el gris se invierte a tonos casi blancos y el texto
+           blanco queda ilegible. Forzamos una pizarra oscura legible. */
+        body[data-theme="dark"] button.secondary {
+            background: linear-gradient(135deg, #3b4a63 0%, #212f45 100%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+        }
+
+        body[data-theme="dark"] button.secondary:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        body[data-theme="dark"] .sensor-card.confort {
+            background: linear-gradient(135deg, #3b4a63 0%, #212f45 100%);
+            color: #ffffff;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -525,6 +541,143 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+        }
+
+        /* ---- Estado grande + porcentaje pequeño en las mediciones ---- */
+        .sensor-estado {
+            font-size: 2.6em;
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 4px;
+        }
+
+        .sensor-pct-mini {
+            font-size: 1.05em;
+            font-weight: 600;
+            opacity: 0.82;
+            margin-bottom: 16px;
+        }
+
+        /* ---- Diagrama de cubículos ---- */
+        .cubiculo-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .cubiculos-block {
+            margin: 0;
+            flex: 0 0 auto;
+            width: 300px;
+            max-width: 100%;
+        }
+
+        .cubiculo-medidas {
+            flex: 1 1 420px;
+            min-width: 0;
+        }
+
+        .cubiculo-medidas .sensors-grid {
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 24px;
+            margin-bottom: 0;
+        }
+
+        .cubiculos-titulo {
+            font-weight: 700;
+            color: var(--fcfm-gray-700);
+            margin-bottom: 12px;
+        }
+
+        .cubiculos-diagram {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 1 / 1;
+            padding: 14px;
+            background: var(--app-surface-soft);
+            border: 2px solid var(--app-line);
+            border-radius: 16px;
+        }
+
+        .cubiculo {
+            position: relative;
+            border: 2px solid var(--app-line);
+            border-radius: 12px;
+            background: var(--white);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+            font-weight: 700;
+            color: var(--fcfm-gray-700);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            min-height: 92px;
+        }
+
+        .cubiculo:hover {
+            transform: translateY(-2px);
+            border-color: var(--fcfm-red);
+        }
+
+        .cubiculo .cub-num {
+            font-size: 1.7em;
+        }
+
+        .cubiculo .cub-label {
+            font-size: 0.68em;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .cubiculo.piloto {
+            border-color: var(--fcfm-red);
+            background: var(--fcfm-red-light);
+            color: var(--fcfm-red-dark);
+        }
+
+        .cubiculo.selected {
+            border-color: var(--fcfm-red);
+            box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.25);
+        }
+
+        .cubiculo .cub-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.58em;
+            background: var(--fcfm-red);
+            color: #fff;
+            padding: 2px 7px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .cubiculos-hint {
+            margin-top: 12px;
+            font-size: 0.9em;
+            color: var(--fcfm-gray-500);
+            font-weight: 600;
+        }
+
+        .cubiculo-nosensor {
+            padding: 26px;
+            border: 2px dashed var(--app-line);
+            border-radius: 16px;
+            color: var(--fcfm-gray-500);
+            background: var(--app-surface-soft);
+            text-align: center;
+            font-weight: 600;
         }
 
         .status-indicator {
@@ -1094,8 +1247,12 @@
                 text-align: center;
             }
 
-            .sensor-value {
-                font-size: 3em;
+            .sensor-estado {
+                font-size: 2em;
+            }
+
+            .cubiculos-diagram {
+                width: 100%;
             }
 
             .chart-container {
@@ -1120,7 +1277,7 @@
 
         <section class="ucursos-hero" id="heroSection">
             <div>
-                <div class="hero-eyebrow">U-Cursos + U-Campus + U-Baños</div>
+                <div class="hero-eyebrow">U-Baños</div>
                 <h2 class="hero-title">Encuentra un baño disponible sin darte vueltas</h2>
                 <p class="hero-copy">Elige edificio, piso o sector, y tipo de baño. Dejamos los datos preparados para cambiar disponibilidad y cantidades mañana sin tocar el diseño completo.</p>
                 <div class="hero-pills">
@@ -1368,9 +1525,22 @@
         let currentFloor = null;
         let currentBano = null;
         let currentBathroomType = null;
+        let currentCubiculo = null;
         let allData = {};
         let charts = {};
         let autoRefreshInterval;
+
+        // Cada baño tiene 4 cubículos. El cubículo piloto (con sensores) se elige
+        // al azar una vez por baño y se mantiene estable durante la sesión.
+        const CUBICULOS_POR_BANO = 4;
+        const PILOTO_CUBICULO = {};
+
+        function getPilotoCubiculo(banoId) {
+            if (PILOTO_CUBICULO[banoId] === undefined) {
+                PILOTO_CUBICULO[banoId] = Math.floor(Math.random() * CUBICULOS_POR_BANO);
+            }
+            return PILOTO_CUBICULO[banoId];
+        }
 
         // --- Efecto cursor reactivo (spotlight) para botones y tarjetas ---
         document.addEventListener('mousemove', function(e) {
@@ -1453,15 +1623,20 @@
         function countBathrooms(ids) {
             return ids.reduce(function(acc, id) {
                 const bano = BANOS[id];
-                acc.comunes += bano.comunes || 0;
-                acc.accesibles += bano.accesibles || 0;
+                if (bano.tipo === 'universal') {
+                    acc.universales += 1;
+                } else {
+                    acc.banos += 1;
+                }
                 return acc;
-            }, { comunes: 0, accesibles: 0 });
+            }, { banos: 0, universales: 0 });
         }
 
         function formatBathroomCounts(ids) {
             const counts = countBathrooms(ids);
-            return counts.comunes + ' comunes · ' + counts.accesibles + ' accesibles';
+            const banos = counts.banos + ' baño' + (counts.banos === 1 ? '' : 's');
+            const universales = counts.universales + ' universal' + (counts.universales === 1 ? '' : 'es');
+            return banos + ' · ' + universales;
         }
 
         function findBanoByType(buildingId, piso, tipoId) {
@@ -1473,10 +1648,18 @@
         }
 
         function totalRegisteredBathrooms() {
-            return Object.keys(BANOS).reduce(function(total, id) {
-                const bano = BANOS[id];
-                return total + (bano.comunes || 0) + (bano.accesibles || 0);
-            }, 0);
+            return Object.keys(BANOS).length;
+        }
+
+        // Mapea un porcentaje aproximado a un estado legible (confort y jabón).
+        // Valores tipo 100 / 75 / 50 / 30 / 15 -> Lleno / Casi lleno / Medio / Bajo / Crítico
+        function estadoInsumo(pct) {
+            if (pct === null || pct === undefined || pct < 0) return { texto: 'Sin señal', clase: 'sin-senal' };
+            if (pct >= 90) return { texto: 'Lleno', clase: 'lleno' };
+            if (pct >= 62) return { texto: 'Casi lleno', clase: 'casi' };
+            if (pct >= 40) return { texto: 'Medio', clase: 'medio' };
+            if (pct >= 22) return { texto: 'Bajo', clase: 'bajo' };
+            return { texto: 'Crítico', clase: 'critico' };
         }
 
         function getBanoWorst(banoId) {
@@ -1584,7 +1767,7 @@
                     '<div class="card-top"><div><div class="bano-name">' + tipo.nombre + '</div>' +
                     '<div class="bano-meta">' + tipo.descripcion + '<br>' + pisoLabel(bano.piso, bano.edificio) + piloto + '</div></div>' +
                     '<div class="type-icon" aria-hidden="true">' + tipo.icono + '</div></div>' +
-                    '<div class="count-line">🚻 ' + (bano.comunes || 0) + ' comunes · ♿ ' + (bano.accesibles || 0) + ' accesibles</div>' +
+                    '<div class="count-line">🚪 ' + CUBICULOS_POR_BANO + ' cubículos</div>' +
                     '<div class="bano-status" id="status-' + id + '">' + status + '</div>' +
                     '</button>';
             }).join('');
@@ -1623,16 +1806,28 @@
                     }
                 });
 
+                const pilotoIdx = getPilotoCubiculo(banoId);
+                currentCubiculo = pilotoIdx;
+
                 const html = '<h2 style="font-size: 1.8em; color: var(--fcfm-gray-900); margin-bottom: 8px;">' + tipo.icono + ' ' + tipo.nombre + '</h2>' +
                     '<p style="color: var(--fcfm-gray-700); font-weight: 700; margin-bottom: 8px;">' + edificio.nombre + ' / ' + pisoLabel(bano.piso, bano.edificio) + '</p>' +
-                    '<p style="color: var(--fcfm-gray-700); font-weight: 700; margin-bottom: 28px;">🚻 ' + (bano.comunes || 0) + ' baños comunes · ♿ ' + (bano.accesibles || 0) + ' baños accesibles</p>' +
+                    '<p style="color: var(--fcfm-gray-700); font-weight: 700; margin-bottom: 24px;">🚪 ' + CUBICULOS_POR_BANO + ' cubículos</p>' +
+                    '<div class="cubiculo-layout">' +
+                    '<div class="cubiculos-block">' +
+                    '<div class="cubiculos-titulo">Cubículos del baño</div>' +
+                    '<div class="cubiculos-diagram" id="cubiculos-' + banoId + '"></div>' +
+                    '<div class="cubiculos-hint" id="cubiculos-hint-' + banoId + '"></div>' +
+                    '</div>' +
+                    '<div class="cubiculo-medidas">' +
+                    '<div id="cubiculo-datos-' + banoId + '">' +
                     '<div class="sensors-grid">' +
                     '<div class="sensor-card confort" id="sensor-' + banoId + '-confort">' +
                     '<div class="sensor-content">' +
                     '<div class="sensor-icon">CONFORT</div>' +
                     '<div class="sensor-title">Sensor Confort</div>' +
                     '<div class="sensor-description">Disponibilidad de papel/confort</div>' +
-                    '<div class="sensor-value"><span id="value-' + banoId + '-confort">--</span><span class="sensor-unit">%</span></div>' +
+                    '<div class="sensor-estado" id="estado-' + banoId + '-confort">--</div>' +
+                    '<div class="sensor-pct-mini">≈ <span id="value-' + banoId + '-confort">--</span>%</div>' +
                     '<div class="sensor-bar"><div class="sensor-bar-fill" id="bar-' + banoId + '-confort" style="width: 0%"></div></div>' +
                     '<div class="sensor-status"><span class="status-indicator ok" id="indicator-' + banoId + '-confort"></span><span id="status-' + banoId + '-confort">Cargando...</span></div>' +
                     '<div class="sensor-stats">' +
@@ -1645,14 +1840,21 @@
                     '<div class="sensor-icon">JABÓN</div>' +
                     '<div class="sensor-title">Sensor Jabón</div>' +
                     '<div class="sensor-description">Nivel disponible de jabón</div>' +
-                    '<div class="sensor-value"><span id="value-' + banoId + '-jabon">--</span><span class="sensor-unit">%</span></div>' +
+                    '<div class="sensor-estado" id="estado-' + banoId + '-jabon">--</div>' +
+                    '<div class="sensor-pct-mini">≈ <span id="value-' + banoId + '-jabon">--</span>%</div>' +
                     '<div class="sensor-bar"><div class="sensor-bar-fill" id="bar-' + banoId + '-jabon" style="width: 0%"></div></div>' +
                     '<div class="sensor-status"><span class="status-indicator ok" id="indicator-' + banoId + '-jabon"></span><span id="status-' + banoId + '-jabon">Cargando...</span></div>' +
                     '<div class="sensor-stats">' +
                     '<div class="stat-item"><div class="stat-label">Mínimo</div><div class="stat-value" id="min-' + banoId + '-jabon">-</div></div>' +
                     '<div class="stat-item"><div class="stat-label">Máximo</div><div class="stat-value" id="max-' + banoId + '-jabon">-</div></div>' +
                     '</div><div class="timestamp" id="timestamp-' + banoId + '-jabon"></div>' +
-                    '</div></div></div>' +
+                    '</div></div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="cubiculo-nosensor" id="cubiculo-nosensor-' + banoId + '" style="display: none;"></div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div id="cubiculo-detalle-' + banoId + '">' +
                     '<div class="details-toggle-wrap">' +
                     '<button class="secondary" id="toggle-btn-' + banoId + '" onclick="toggleDetails(\'' + banoId + '\')">VER MÁS DATOS ▼</button>' +
                     '</div>' +
@@ -1665,9 +1867,67 @@
                     '<div class="extra-stat"><div class="val" id="extra-promjabon-' + banoId + '">-</div><div class="lbl">Promedio Jabón</div></div>' +
                     '<div class="extra-stat"><div class="val" id="extra-horapico-' + banoId + '">-</div><div class="lbl">Hora de mayor consumo</div></div>' +
                     '</div>' +
-                    '</div></div>';
+                    '</div></div></div>';
                 contentDiv.innerHTML = html;
                 contentDiv.dataset.bano = banoId;
+
+                renderCubiculos(banoId);
+                setCubiculoView(banoId, pilotoIdx);
+            }
+        }
+
+        // Dibuja los 4 cubículos (cuadrado dividido en 4 con separaciones).
+        function renderCubiculos(banoId) {
+            const cont = document.getElementById('cubiculos-' + banoId);
+            if (!cont) return;
+            const pilotoIdx = getPilotoCubiculo(banoId);
+            let html = '';
+            for (let i = 0; i < CUBICULOS_POR_BANO; i++) {
+                const esPiloto = i === pilotoIdx;
+                const selClass = i === currentCubiculo ? ' selected' : '';
+                const pilClass = esPiloto ? ' piloto' : '';
+                const badge = esPiloto ? '<span class="cub-badge">Piloto</span>' : '';
+                const label = esPiloto ? 'Con sensor' : 'Sin sensor';
+                html += '<button type="button" class="cubiculo' + pilClass + selClass + '" ' +
+                    'onclick="selectCubiculo(\'' + banoId + '\', ' + i + ')">' +
+                    badge +
+                    '<span class="cub-num">' + (i + 1) + '</span>' +
+                    '<span class="cub-label">' + label + '</span>' +
+                    '</button>';
+            }
+            cont.innerHTML = html;
+        }
+
+        // Ajusta la vista según el cubículo seleccionado (sin recargar datos).
+        function setCubiculoView(banoId, idx) {
+            const pilotoIdx = getPilotoCubiculo(banoId);
+            const datos = document.getElementById('cubiculo-datos-' + banoId);
+            const detalle = document.getElementById('cubiculo-detalle-' + banoId);
+            const nosensor = document.getElementById('cubiculo-nosensor-' + banoId);
+            const hint = document.getElementById('cubiculos-hint-' + banoId);
+
+            if (idx === pilotoIdx) {
+                if (datos) datos.style.display = '';
+                if (detalle) detalle.style.display = '';
+                if (nosensor) nosensor.style.display = 'none';
+                if (hint) hint.textContent = 'Cubículo ' + (idx + 1) + ': cubículo piloto con sensores de confort y jabón.';
+            } else {
+                if (datos) datos.style.display = 'none';
+                if (detalle) detalle.style.display = 'none';
+                if (nosensor) {
+                    nosensor.style.display = '';
+                    nosensor.textContent = 'El cubículo ' + (idx + 1) + ' aún no tiene sensores instalados. Las mediciones en tiempo real están en el cubículo piloto (N.º ' + (pilotoIdx + 1) + ').';
+                }
+                if (hint) hint.textContent = 'Selecciona el cubículo piloto (N.º ' + (pilotoIdx + 1) + ') para ver las mediciones.';
+            }
+        }
+
+        function selectCubiculo(banoId, idx) {
+            currentCubiculo = idx;
+            renderCubiculos(banoId);
+            setCubiculoView(banoId, idx);
+            if (idx === getPilotoCubiculo(banoId)) {
+                displayBanoData(banoId);
             }
         }
 
@@ -1851,6 +2111,7 @@
             const valueEl = document.getElementById('value-' + banoId + '-' + sensorType);
             if (!valueEl) return;
 
+            const estadoEl = document.getElementById('estado-' + banoId + '-' + sensorType);
             const barEl = document.getElementById('bar-' + banoId + '-' + sensorType);
             const statusEl = document.getElementById('status-' + banoId + '-' + sensorType);
             const indicatorEl = document.getElementById('indicator-' + banoId + '-' + sensorType);
@@ -1859,11 +2120,14 @@
             const timestampEl = document.getElementById('timestamp-' + banoId + '-' + sensorType);
 
             const safeValue = value >= 0 ? Math.max(0, Math.min(100, value)) : -1;
+            const nivel = estadoInsumo(safeValue);
 
-            valueEl.textContent = safeValue >= 0 ? safeValue.toFixed(1) : '--';
+            // Estado grande + porcentaje aproximado pequeño
+            if (estadoEl) estadoEl.textContent = nivel.texto;
+            valueEl.textContent = safeValue >= 0 ? Math.round(safeValue) : '--';
             barEl.style.width = (safeValue >= 0 ? safeValue : 0) + '%';
-            minEl.textContent = minVal >= 0 ? minVal.toFixed(1) : '-';
-            maxEl.textContent = maxVal >= 0 ? maxVal.toFixed(1) : '-';
+            minEl.textContent = minVal >= 0 ? Math.round(minVal) : '-';
+            maxEl.textContent = maxVal >= 0 ? Math.round(maxVal) : '-';
             timestampEl.textContent = timestamp && timestamp !== '--' ? '[Lectura: ' + timestamp + ']' : '[Sin lectura registrada]';
 
             let statusText, indicatorClass;
@@ -1888,6 +2152,12 @@
         function displayBanoData(banoId) {
             const series = allData[banoId];
             if (!series) return null;
+
+            // Si el cubículo activo no es el piloto, no hay mediciones que mostrar.
+            if (currentBano === banoId && currentCubiculo !== null &&
+                currentCubiculo !== getPilotoCubiculo(banoId)) {
+                return getBanoWorst(banoId);
+            }
 
             const lc = series.confort.length ? series.confort[series.confort.length - 1] : null;
             const lj = series.jabon.length ? series.jabon[series.jabon.length - 1] : null;
@@ -1979,6 +2249,7 @@
         let firstRoute = true;
 
         function clearDetail() {
+            currentCubiculo = null;
             const dc = document.getElementById('dynamicContent');
             if (dc) {
                 dc.innerHTML = '';
